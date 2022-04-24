@@ -18,7 +18,10 @@ type Config struct {
 		Hostname string `yaml:"hostname"`
 		Port     uint16 `yaml:"port"`
 
-		Database string `yaml:"database"`
+		Database struct {
+			Organization string `yaml:type`
+			URI string `yaml: "uri`
+		}
 
 		ID  string `yaml:"id"`
 		Bot struct {
@@ -55,7 +58,7 @@ func (config *Config) Save(path string) error {
 	return ioutil.WriteFile(path, data, 0600)
 }
 
-func (config *Config) Appservice() (*appservice.AppService, error) {
+func (config *Config) MakeAppservice() (*appservice.AppService, error) {
 	as := appservice.Create()
 	as.LogConfig = config.Logging
 	as.HomeserverDomain = config.Homeserver.Domain
