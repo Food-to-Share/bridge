@@ -6,24 +6,29 @@ import (
 )
 
 type BridgeConfig struct {
-	RawUsernameTemplate    string             `yaml:"username_template"`
-	RawDisplaynameTemplate string             `yaml:"displayname_template"`
-	UsernameTemplate       *template.Template `yaml:"-"`
-	DisplaynameTemplate    *template.Template `yaml:"-"`
+	UsernameTemplate    string `yaml:"username_template"`
+	DisplaynameTemplate string `yaml:"displayname_template"`
+
+	CommandPrefix string `yaml:"command_prefix"`
+
+	usernameTemplate    *template.Template `yaml:"-"`
+	displaynameTemplate *template.Template `yaml:"-"`
 }
 
-func (bc BridgeConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	err := unmarshal(bc)
+type umBridgeConfig BridgeConfig
+
+func (bc *BridgeConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	err := unmarshal((*umBridgeConfig)(bc))
 	if err != nil {
 		return err
 	}
 
-	bc.UsernameTemplate, err = template.New("username").Parse(bc.RawUsernameTemplate)
+	bc.usernameTemplate, err = template.New("username").Parse(bc.UsernameTemplate)
 	if err != nil {
 		return err
 	}
 
-	bc.DisplaynameTemplate, err = template.New("displayname").Parse(bc.RawDisplaynameTemplate)
+	bc.displaynameTemplate, err = template.New("displayname").Parse(bc.DisplaynameTemplate)
 	return err
 }
 
@@ -32,29 +37,27 @@ type DisplaynameTemplateArgs struct {
 }
 
 type UsernameTemplateArgs struct {
-	Receiver string
-	UserID   string
+	UserID string
 }
 
 func (bc BridgeConfig) FormatDisplayname(displayname string) string {
 	var buf bytes.Buffer
-	bc.DisplaynameTemplate.Execute(&buf, DisplaynameTemplateArgs{
+	bc.displaynameTemplate.Execute(&buf, DisplaynameTemplateArgs{
 		Displayname: displayname,
 	})
 	return buf.String()
 }
 
-func (bc BridgeConfig) FormatUsername(receiver, userID string) string {
+func (bc BridgeConfig) FormatUsername(userID string) string {
 	var buf bytes.Buffer
-	bc.UsernameTemplate.Execute(&buf, UsernameTemplateArgs{
-		Receiver: receiver,
-		UserID:   userID,
+	bc.usernameTemplate.Execute(&buf, UsernameTemplateArgs{
+		UserID: userID,
 	})
 	return buf.String()
 }
 
 func (bc BridgeConfig) MarshalYAML() (interface{}, error) {
-	bc.RawDisplaynameTemplate = bc.FormatDisplayname("{{.Displayname}}")
-	bc.RawUsernameTemplate = bc.FormatUsername("{{.Receiver}}", "{{.UserID}}")
+	bc.DisplaynameTemplate = bc.FormatDisplayname("{{.Displayname}}")
+	bc.UsernameTemplate = bc.FormatUsername("{{.UserID}}")
 	return bc, nil
 }

@@ -3,6 +3,8 @@ package config
 import (
 	"regexp"
 
+	"fmt"
+
 	"maunium.net/go/mautrix/appservice"
 )
 
@@ -40,7 +42,9 @@ func (config *Config) copyToRegistration(registration *appservice.Registration) 
 	registration.RateLimited = &falseVal
 	registration.SenderLocalpart = config.AppService.Bot.Username
 
-	userIDRegex, err := regexp.Compile(config.Bridge.FormatUsername("[0-9]+", "[0-9]+"))
+	userIDRegex, err := regexp.Compile(fmt.Sprintf("@%s:%s",
+		config.Bridge.FormatUsername("[0-9]+"),
+		config.Homeserver.Domain))
 	if err != nil {
 		return err
 	}

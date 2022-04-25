@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"os"
-	"maunium.net/go/mautrix-whatsapp/config"
-	flag "maunium.net/go/mauflag"
 	"os/signal"
+	"sync"
 	"syscall"
-	"maunium.net/go/mautrix-appservice"
-	log "maunium.net/go/maulogger"
-	"maunium.net/go/mautrix-whatsapp/database"
+
+	"github.com/Food-to-Share/bridge/config"
+	"github.com/Food-to-Share/bridge/database"
+	"github.com/Food-to-Share/bridge/types"
+	flag "maunium.net/go/mauflag"
+	log "maunium.net/go/maulogger/v2"
+	appservice "maunium.net/go/mautrix-appservice"
 )
 
 var configPath = flag.MakeFull("c", "config", "The path to your config file.", "config.yaml").String()
@@ -40,16 +43,37 @@ func (bridge *Bridge) GenerateRegistration() {
 }
 
 type Bridge struct {
-	AppService *appservice.AppService
-	Config     *config.Config
-	DB         *database.Database
-	Log        *log.Logger
+	AS             *appservice.AppService
+	EventProcessor *appservice.EventProcessor
+	MatrixHandler  *MatrixHandler
+	Config         *config.Config
+	DB             *database.Database
+	Log            log.Logger
+	StateStore     *AutosavingStateStore
+	Bot            *appservice.IntentAPI
+	Formatter      *Formatter
 
-	MatrixListener *MatrixListener
+	usersByMXID         map[types.MatrixUserID]*User
+	usersByJID          map[types.AppID]*User
+	usersLock           sync.Mutex
+	managementRooms     map[types.MatrixRoomID]*User
+	managementRoomsLock sync.Mutex
+	portalsByMXID       map[types.MatrixRoomID]*Portal
+	portalsByJID        map[database.PortalKey]*Portal
+	portalsLock         sync.Mutex
+	puppets             map[types.AppID]*Puppet
+	puppetsLock         sync.Mutex
 }
 
 func NewBridge() *Bridge {
-	bridge := &Bridge{}
+	bridge := &Bridge{
+		usersByMXID:     make(map[types.MatrixUserID]*User),
+		usersByJID:      make(map[types.AppID]*User),
+		managementRooms: make(map[types.MatrixRoomID]*User),
+		portalsByMXID:   make(map[types.MatrixRoomID]*Portal),
+		portalsByJID:    make(map[database.PortalKey]*Portal),
+		puppets:         make(map[types.AppID]*Puppet),
+	}
 	var err error
 	bridge.Config, err = config.Load(*configPath)
 	if err != nil {
@@ -61,33 +85,93 @@ func NewBridge() *Bridge {
 
 func (bridge *Bridge) Init() {
 	var err error
-	bridge.AppService, err = bridge.Config.MakeAppService()
+	bridge.AS, err = bridge.Config.MakeAppservice()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to initialize AppService:", err)
 		os.Exit(11)
 	}
-	bridge.AppService.Init()
-	bridge.Log = bridge.AppService.Log.Parent
-	log.DefaultLogger = bridge.Log
-	bridge.AppService.Log = log.CreateSublogger("Matrix", log.LevelDebug)
+	bridge.AS.Init()
+	bridge.Bot = bridge.AS.BotIntent()
+	bridge.Log = log.Create()
+	bridge.Config.Logging.Configure(bridge.Log)
+	log.DefaultLogger = bridge.Log.(*log.BasicLogger)
+
+	err = log.OpenFile()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to open log file:", err)
+		os.Exit(12)
+	}
+	bridge.AS.Log = log.Sub("Matrix")
+
+	bridge.Log.Debugln("Initializing state store")
+	bridge.StateStore = NewAutosavingStateStore(bridge.Config.AppService.StateStore)
+	err = bridge.StateStore.Load()
+	if err != nil {
+		bridge.Log.Fatalln("Failed to load state store:", err)
+		os.Exit(13)
+	}
+	bridge.AS.StateStore = bridge.StateStore
+
+	bridge.Log.Debugln("Initializing database")
+	bridge.DB, err = database.New(bridge.Config.AppService.Database.URI)
+	if err != nil {
+		bridge.Log.Fatalln("Failed to initialize database:", err)
+		os.Exit(14)
+	}
+
+	bridge.Log.Debugln("Initializing Matrix event processor")
+	bridge.EventProcessor = appservice.NewEventProcessor(bridge.AS)
+	bridge.Log.Debugln("Initializing Matrix event handler")
+	bridge.MatrixHandler = NewMatrixHandler(bridge)
+	bridge.Formatter = NewFormatter(bridge)
 
 	bridge.DB, err = database.New(bridge.Config.AppService.Database.URI)
 	if err != nil {
 		bridge.Log.Fatalln("Failed to initialize database:", err)
 		os.Exit(12)
 	}
-
-	bridge.MatrixListener = NewMatrixListener(bridge)
 }
 
 func (bridge *Bridge) Start() {
-	bridge.AppService.Start()
-	bridge.MatrixListener.Start()
+	err := bridge.DB.CreateTables()
+	if err != nil {
+		bridge.Log.Fatalfln("Failed to create database tables:", err)
+		os.Exit(15)
+	}
+	bridge.Log.Debugln("Starting application service HTTP server")
+	go bridge.AS.Start()
+	bridge.Log.Debugln("Starting event processor")
+	go bridge.EventProcessor.Start()
+	go bridge.UpdateBotProfile()
+	go bridge.StartUsers()
+}
+
+func (bridge *Bridge) UpdateBotProfile() {
+	bridge.Log.Debugln("Updating bot profile")
+	botConfig := bridge.Config.AppService.Bot
+
+	var err error
+	if botConfig.Displayname == "remove" {
+		err = bridge.Bot.SetDisplayName("")
+	}
+	if err != nil {
+		bridge.Log.Warnln("Failed to update bot displayname:", err)
+	}
+}
+
+func (bridge *Bridge) StartUsers() {
+	for _, user := range bridge.GetAllUsers() {
+		go user.Connect(false)
+	}
 }
 
 func (bridge *Bridge) Stop() {
-	bridge.AppService.Stop()
-	bridge.MatrixListener.Stop()
+	bridge.AS.Stop()
+	bridge.EventProcessor.Stop()
+	err := bridge.StateStore.Save()
+	if err != nil {
+		bridge.Log.Warnln("Failed to save state store:", err)
+	}
 }
 
 func (bridge *Bridge) Main() {
@@ -125,92 +209,3 @@ func main() {
 
 	NewBridge().Main()
 }
-/*
-func temp() {
-	wac, err := whatsapp.NewConn(20 * time.Second)
-	if err != nil {
-		panic(err)
-	}
-
-	wac.AddHandler(myHandler{})
-
-	sess, err := LoadSession("whatsapp.session")
-	if err != nil {
-		fmt.Println(err)
-		sess, err = Login(wac)
-	} else {
-		sess, err = wac.RestoreSession(sess)
-	}
-	if err != nil {
-		panic(err)
-	}
-	SaveSession(sess, "whatsapp.session")
-
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print("receiver> ")
-		receiver, _ := reader.ReadString('\n')
-		fmt.Print("message> ")
-		message, _ := reader.ReadString('\n')
-		wac.Send(whatsapp.TextMessage{
-			Info: whatsapp.MessageInfo{
-				RemoteJid: fmt.Sprintf("%s@s.whatsapp.net", receiver),
-			},
-			Text: message,
-		})
-		fmt.Println(receiver, message)
-	}
-}
-
-func Login(wac *whatsapp.Conn) (whatsapp.Session, error) {
-	qrChan := make(chan string)
-	go func() {
-		qrterminal.Generate(<-qrChan, qrterminal.L, os.Stdout)
-	}()
-	return wac.Login(qrChan)
-}
-
-func SaveSession(session whatsapp.Session, fileName string) {
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		panic(err)
-	}
-
-	enc := gob.NewEncoder(file)
-	enc.Encode(session)
-}
-
-func LoadSession(fileName string) (sess whatsapp.Session, err error) {
-	file, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
-	if err != nil {
-		return sess, err
-	}
-
-	dec := gob.NewDecoder(file)
-	dec.Decode(sess)
-	return
-}
-
-
-type myHandler struct{}
-
-func (myHandler) HandleError(err error) {
-	fmt.Fprintf(os.Stderr, "%v", err)
-}
-
-func (myHandler) HandleTextMessage(message whatsapp.TextMessage) {
-	fmt.Println(message)
-}
-
-func (myHandler) HandleImageMessage(message whatsapp.ImageMessage) {
-	fmt.Println(message)
-}
-
-func (myHandler) HandleVideoMessage(message whatsapp.VideoMessage) {
-	fmt.Println(message)
-}
-
-func (myHandler) HandleJsonMessage(message string) {
-	fmt.Println(message)
-}
-*/

@@ -21,6 +21,7 @@ appservice:
     type: sqlite3
     # The database URI. Usually file name. https://github.com/mattn/go-sqlite3#connection-string
     uri: foodtoshare.db
+  state_store_path: ./mx-state.json
 
   # The unique ID of this appservice.
   id: foodtoshare
@@ -42,7 +43,7 @@ bridge:
   # Localpart template of MXIDs for Whatsapp users.
   # {{.receiver}} is replaced with the Whatsapp user ID of the Matrix user receiving messages.
   # {{.userid}} is replaced with the user ID of the Whatsapp user.
-  username_template: "foodtoshare_{{.Receiver}}_{{.UserID}}"
+  username_template: "foodtoshare_{{.}}"
   # Displayname template for Whatsapp users.
   # {{.displayname}} is replaced with the display name of the Whatsapp user.
   displayname_template: "{{.Displayname}}"
