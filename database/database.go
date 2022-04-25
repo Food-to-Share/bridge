@@ -2,15 +2,18 @@ package database
 
 import (
 	"database/sql"
+
 	_ "github.com/mattn/go-sqlite3"
-	log "maunium.net/go/maulogger"
+	log "maunium.net/go/maulogger/v2"
 )
 
 type Database struct {
 	*sql.DB
-	log *log.Sublogger
+	log log.Logger
 
-	User *UserQuery
+	User   *UserQuery
+	Portal *PortalQuery
+	Puppet *PuppetQuery
 }
 
 func New(file string) (*Database, error) {
@@ -21,13 +24,37 @@ func New(file string) (*Database, error) {
 
 	db := &Database{
 		DB:  conn,
-		log: log.CreateSublogger("Database", log.LevelDebug),
+		log: log.Sub("Database"),
 	}
 	db.User = &UserQuery{
 		db:  db,
-		log: log.CreateSublogger("Database/User", log.LevelDebug),
+		log: db.log.Sub("User"),
+	}
+	db.Portal = &PortalQuery{
+		db:  db,
+		log: db.log.Sub("Portal"),
+	}
+	db.Puppet = &PuppetQuery{
+		db:  db,
+		log: db.log.Sub("Puppet"),
 	}
 	return db, nil
+}
+
+func (db *Database) CreateTables() error {
+	err := db.User.CreateTable()
+	if err != nil {
+		return err
+	}
+	err = db.Portal.CreateTable()
+	if err != nil {
+		return err
+	}
+	err = db.Puppet.CreateTable()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type Scannable interface {

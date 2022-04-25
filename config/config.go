@@ -19,8 +19,8 @@ type Config struct {
 		Port     uint16 `yaml:"port"`
 
 		Database struct {
-			Organization string `yaml:type`
-			URI string `yaml: "uri`
+			Type string `yaml:type`
+			URI  string `yaml: "uri`
 		}
 
 		ID  string `yaml:"id"`
@@ -60,9 +60,10 @@ func (config *Config) Save(path string) error {
 
 func (config *Config) MakeAppservice() (*appservice.AppService, error) {
 	as := appservice.Create()
-	as.LogConfig = config.Logging
 	as.HomeserverDomain = config.Homeserver.Domain
 	as.HomeserverURL = config.Homeserver.Address
+	as.Host.Hostname = config.AppService.Hostname
+	as.Host.Port = config.AppService.Port
 	var err error
 	as.Registration, err = config.GetRegistration()
 	return as, err
