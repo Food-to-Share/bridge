@@ -2,9 +2,9 @@ package main
 
 import (
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix/id"
 
 	"github.com/Food-to-Share/bridge/database"
-	"github.com/Food-to-Share/bridge/types"
 )
 
 type User struct {
@@ -14,7 +14,7 @@ type User struct {
 	log    log.Logger
 }
 
-func (bridge *Bridge) GetUserByMXID(userID types.MatrixUserID) *User {
+func (bridge *Bridge) GetUserByMXID(userID id.UserID) *User {
 	bridge.usersLock.Lock()
 	defer bridge.usersLock.Unlock()
 	user, ok := bridge.usersByMXID[userID]
@@ -37,7 +37,7 @@ func (bridge *Bridge) GetUserByMXID(userID types.MatrixUserID) *User {
 	return user
 }
 
-func (bridge *Bridge) GetUserByJID(userID types.AppID) *User {
+func (bridge *Bridge) GetUserByJID(userID string) *User {
 	bridge.usersLock.Lock()
 	defer bridge.usersLock.Unlock()
 	user, ok := bridge.usersByJID[userID]

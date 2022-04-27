@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	log "maunium.net/go/maulogger/v2"
-
-	"github.com/Food-to-Share/bridge/types"
+	"maunium.net/go/mautrix/id"
 )
 
 type UserQuery struct {
@@ -15,9 +14,9 @@ type UserQuery struct {
 }
 
 func (uq *UserQuery) CreateTable() error {
-	_, err := uq.db.Exec(`CREATE TABLE IF NOT EXISTS user (
+	_, err := uq.db.Exec(`CREATE TABLE IF NOT EXISTS "user" (
 		mxid  VARCHAR(255) PRIMARY KEY,
-		jid  VARCHAR(25)  UNIQUE,
+		jid  VARCHAR(255)  UNIQUE,
 		management_room VARCHAR(255),
 		client_id    VARCHAR(255),
 		client_token VARCHAR(255),
@@ -46,7 +45,7 @@ func (uq *UserQuery) GetAll() (users []*User) {
 	return
 }
 
-func (uq *UserQuery) GetByMXID(userID types.MatrixUserID) *User {
+func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
 	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=?", userID)
 	if row == nil {
 		return nil
@@ -54,7 +53,7 @@ func (uq *UserQuery) GetByMXID(userID types.MatrixUserID) *User {
 	return uq.New().Scan(row)
 }
 
-func (uq *UserQuery) GetByJID(userID types.AppID) *User {
+func (uq *UserQuery) GetByJID(userID string) *User {
 	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=?", stripSuffix(userID))
 	if row == nil {
 		return nil
@@ -66,9 +65,9 @@ type User struct {
 	db  *Database
 	log log.Logger
 
-	MXID           types.MatrixUserID
-	JID            types.AppID
-	ManagementRoom types.MatrixRoomID
+	MXID           id.UserID
+	JID            string
+	ManagementRoom id.RoomID
 }
 
 func (user *User) Scan(row Scannable) *User {
@@ -97,7 +96,7 @@ func (user *User) Scan(row Scannable) *User {
 	return user
 }
 
-func stripSuffix(jid types.AppID) string {
+func stripSuffix(jid string) string {
 	if len(jid) == 0 {
 		return jid
 	}

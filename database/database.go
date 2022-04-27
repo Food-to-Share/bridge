@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	log "maunium.net/go/maulogger/v2"
 )
@@ -16,8 +17,8 @@ type Database struct {
 	Puppet *PuppetQuery
 }
 
-func New(file string) (*Database, error) {
-	conn, err := sql.Open("sqlite3", file)
+func New(dbType string, uri string) (*Database, error) {
+	conn, err := sql.Open(dbType, uri)
 	if err != nil {
 		return nil, err
 	}
@@ -26,6 +27,7 @@ func New(file string) (*Database, error) {
 		DB:  conn,
 		log: log.Sub("Database"),
 	}
+
 	db.User = &UserQuery{
 		db:  db,
 		log: db.log.Sub("User"),

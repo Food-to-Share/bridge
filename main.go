@@ -9,10 +9,10 @@ import (
 
 	"github.com/Food-to-Share/bridge/config"
 	"github.com/Food-to-Share/bridge/database"
-	"github.com/Food-to-Share/bridge/types"
 	flag "maunium.net/go/mauflag"
 	log "maunium.net/go/maulogger/v2"
 	"maunium.net/go/mautrix/appservice"
+	"maunium.net/go/mautrix/id"
 )
 
 var configPath = flag.MakeFull("c", "config", "The path to your config file.", "config.yaml").String()
@@ -52,26 +52,28 @@ type Bridge struct {
 	StateStore     *database.SQLStateStore
 	Bot            *appservice.IntentAPI
 
-	usersByMXID         map[types.MatrixUserID]*User
-	usersByJID          map[types.AppID]*User
+	usersByMXID         map[id.UserID]*User
+	usersByJID          map[string]*User
 	usersLock           sync.Mutex
-	managementRooms     map[types.MatrixRoomID]*User
+	managementRooms     map[id.RoomID]*User
 	managementRoomsLock sync.Mutex
-	portalsByMXID       map[types.MatrixRoomID]*Portal
+	portalsByMXID       map[id.RoomID]*Portal
 	portalsByJID        map[database.PortalKey]*Portal
 	portalsLock         sync.Mutex
-	puppets             map[types.AppID]*Puppet
+	puppets             map[string]*Puppet
 	puppetsLock         sync.Mutex
 }
 
 func NewBridge() *Bridge {
 	bridge := &Bridge{
-		usersByMXID:     make(map[types.MatrixUserID]*User),
-		usersByJID:      make(map[types.AppID]*User),
-		managementRooms: make(map[types.MatrixRoomID]*User),
-		portalsByMXID:   make(map[types.MatrixRoomID]*Portal),
+		usersByMXID: make(map[id.UserID]*User),
+		usersByJID:  make(map[string]*User),
+		// spaceRooms:          make(map[id.RoomID]*User),
+		managementRooms: make(map[id.RoomID]*User),
+		portalsByMXID:   make(map[id.RoomID]*Portal),
 		portalsByJID:    make(map[database.PortalKey]*Portal),
-		puppets:         make(map[types.AppID]*Puppet),
+		puppets:         make(map[string]*Puppet),
+		// puppetsByCustomMXID: make(map[id.UserID]*Puppet),
 	}
 	var err error
 	bridge.Config, err = config.Load(*configPath)
@@ -102,6 +104,13 @@ func (bridge *Bridge) Init() {
 	}
 	bridge.AS.Log = log.Sub("Matrix")
 
+	bridge.Log.Debugln("Initializing database")
+	bridge.DB, err = database.New(bridge.Config.AppService.Database.Type, bridge.Config.AppService.Database.URI)
+	if err != nil {
+		bridge.Log.Fatalln("Failed to initialize database:", err)
+		os.Exit(14)
+	}
+
 	bridge.Log.Debugln("Initializing state store")
 	bridge.StateStore = database.NewSQLStateStore(bridge.DB)
 	if err != nil {
@@ -110,23 +119,10 @@ func (bridge *Bridge) Init() {
 	}
 	bridge.AS.StateStore = bridge.StateStore
 
-	bridge.Log.Debugln("Initializing database")
-	bridge.DB, err = database.New(bridge.Config.AppService.Database.URI)
-	if err != nil {
-		bridge.Log.Fatalln("Failed to initialize database:", err)
-		os.Exit(14)
-	}
-
 	bridge.Log.Debugln("Initializing Matrix event processor")
 	bridge.EventProcessor = appservice.NewEventProcessor(bridge.AS)
 	bridge.Log.Debugln("Initializing Matrix event handler")
 	bridge.MatrixHandler = NewMatrixHandler(bridge)
-
-	bridge.DB, err = database.New(bridge.Config.AppService.Database.URI)
-	if err != nil {
-		bridge.Log.Fatalln("Failed to initialize database:", err)
-		os.Exit(12)
-	}
 }
 
 func (bridge *Bridge) Start() {

@@ -5,11 +5,11 @@ import (
 	"sync"
 
 	"github.com/Food-to-Share/bridge/database"
-	"github.com/Food-to-Share/bridge/types"
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix/id"
 )
 
-func (bridge *Bridge) GetPortalByMXID(mxid types.MatrixRoomID) *Portal {
+func (bridge *Bridge) GetPortalByMXID(mxid id.RoomID) *Portal {
 	bridge.portalsLock.Lock()
 	defer bridge.portalsLock.Unlock()
 	portal, ok := bridge.portalsByMXID[mxid]
