@@ -1,0 +1,13 @@
+[Apr 27, 2022 22:50:32] [DEBUG] Initializing database
+[Apr 27, 2022 22:50:32] [DEBUG] Initializing state store
+[Apr 27, 2022 22:50:32] [DEBUG] Initializing Matrix event processor
+[Apr 27, 2022 22:50:32] [DEBUG] Initializing Matrix event handler
+[Apr 27, 2022 22:50:32] [INFO] Bridge initialization complete, starting...
+[Apr 27, 2022 22:50:32] [DEBUG] Starting application service HTTP server
+[Apr 27, 2022 22:50:32] [DEBUG] Starting event processor
+[Apr 27, 2022 22:50:32] [INFO] Bridge started!
+[Apr 27, 2022 22:50:32] [DEBUG] Updating bot profile
+[Apr 27, 2022 22:50:32] [Matrix/INFO] Listening on localhost:29318
+[Apr 27, 2022 22:52:08] [INFO] Interrupt received, stopping...
+[Apr 27, 2022 22:52:08] [Matrix/DEBUG] Listener stopped.
+[Apr 27, 2022 22:52:08] [INFO] Bridge stopped.

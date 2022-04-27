@@ -5,23 +5,22 @@ import (
 	"strings"
 
 	log "maunium.net/go/maulogger/v2"
-
-	"github.com/Food-to-Share/bridge/types"
+	"maunium.net/go/mautrix/id"
 )
 
 type PortalKey struct {
-	JID      types.AppID
-	Receiver types.AppID
+	JID      string
+	Receiver string
 }
 
-func GroupPortalKey(jid types.AppID) PortalKey {
+func GroupPortalKey(jid string) PortalKey {
 	return PortalKey{
 		JID:      jid,
 		Receiver: jid,
 	}
 }
 
-func NewPortalKey(jid, receiver types.AppID) PortalKey {
+func NewPortalKey(jid, receiver string) PortalKey {
 	if strings.HasSuffix(jid, "@g.us") {
 		receiver = jid
 	}
@@ -47,10 +46,10 @@ func (pq *PortalQuery) CreateTable() error {
 	_, err := pq.db.Exec(`CREATE TABLE IF NOT EXISTS portal (
 		jid   VARCHAR(255),
 		receiver VARCHAR(255),
-		mxid  VARCHAR(255) NOT NULL UNIQUE,
-		name VARCHAR(255) NOT NULL
+		mxid  VARCHAR(255) UNIQUE,
+		name VARCHAR(255),
 		PRIMARY KEY (jid, receiver),
-		FOREIGN KEY (receiver) REFERENCES user(mxid)
+		FOREIGN KEY (receiver) REFERENCES "user"(mxid)
 	)`)
 	return err
 }
@@ -78,7 +77,7 @@ func (pq *PortalQuery) GetByJID(key PortalKey) *Portal {
 	return pq.get("SELECT * FROM portal WHERE jid=? AND receiver=?", key.JID, key.Receiver)
 }
 
-func (pq *PortalQuery) GetByMXID(mxid types.MatrixRoomID) *Portal {
+func (pq *PortalQuery) GetByMXID(mxid id.RoomID) *Portal {
 	return pq.get("SELECT * FROM portal WHERE mxid=?", mxid)
 }
 
@@ -95,7 +94,7 @@ type Portal struct {
 	log log.Logger
 
 	Key  PortalKey
-	MXID types.MatrixRoomID
+	MXID id.RoomID
 
 	Name string
 }
@@ -109,11 +108,11 @@ func (portal *Portal) Scan(row Scannable) *Portal {
 		}
 		return nil
 	}
-	portal.MXID = mxid.String
+	portal.MXID = id.RoomID(mxid.String)
 	return portal
 }
 
-func (portal *Portal) mxidPtr() *string {
+func (portal *Portal) mxidPtr() *id.RoomID {
 	if len(portal.MXID) > 0 {
 		return &portal.MXID
 	}
@@ -129,12 +128,8 @@ func (portal *Portal) Insert() {
 }
 
 func (portal *Portal) Update() {
-	var mxid *string
-	if len(portal.MXID) > 0 {
-		mxid = &portal.MXID
-	}
 	_, err := portal.db.Exec("UPDATE portal SET mxid=?, name=? WHERE jid=? AND receiver=?",
-		mxid, portal.Name, portal.Key.JID, portal.Key.Receiver)
+		portal.mxidPtr(), portal.Name, portal.Key.JID, portal.Key.Receiver)
 	if err != nil {
 		portal.log.Warnfln("Failed to update %s: %v", portal.Key, err)
 	}

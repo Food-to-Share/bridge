@@ -4,8 +4,6 @@ import (
 	"database/sql"
 
 	log "maunium.net/go/maulogger/v2"
-
-	"github.com/Food-to-Share/bridge/types"
 )
 
 type PuppetQuery struct {
@@ -17,7 +15,7 @@ func (pq *PuppetQuery) CreateTable() error {
 	_, err := pq.db.Exec(`CREATE TABLE IF NOT EXISTS puppet (
 		jid          VARCHAR(25) PRIMARY KEY,
 		displayname  VARCHAR(255),
-		name_quality TINYINT
+		name_quality SMALLINT
 	)`)
 
 	return err
@@ -42,7 +40,7 @@ func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
 	return
 }
 
-func (pq *PuppetQuery) Get(jid types.AppID) *Puppet {
+func (pq *PuppetQuery) Get(jid string) *Puppet {
 	row := pq.db.QueryRow("SELECT * FROM puppet WHERE jid=?", jid)
 	if row == nil {
 		return nil
@@ -54,7 +52,7 @@ type Puppet struct {
 	db  *Database
 	log log.Logger
 
-	JID         types.AppID
+	JID         string
 	Displayname string
 	NameQuality int8
 }

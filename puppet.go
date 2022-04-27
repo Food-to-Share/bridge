@@ -5,11 +5,11 @@ import (
 	"regexp"
 
 	"github.com/Food-to-Share/bridge/database"
-	"github.com/Food-to-Share/bridge/types"
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix/id"
 )
 
-func (bridge *Bridge) ParsePuppetMXID(mxid types.MatrixUserID) (types.AppID, bool) {
+func (bridge *Bridge) ParsePuppetMXID(mxid id.UserID) (string, bool) {
 	userIDRegex, err := regexp.Compile(fmt.Sprintf("^@%s:%s$",
 		bridge.Config.Bridge.FormatUsername("([0-9]+)"),
 		bridge.Config.Homeserver.Domain))
@@ -22,11 +22,11 @@ func (bridge *Bridge) ParsePuppetMXID(mxid types.MatrixUserID) (types.AppID, boo
 		return "", false
 	}
 
-	jid := types.AppID(match[1])
+	jid := match[1]
 	return jid, true
 }
 
-func (bridge *Bridge) GetPuppetByMXID(mxid types.MatrixUserID) *Puppet {
+func (bridge *Bridge) GetPuppetByMXID(mxid id.UserID) *Puppet {
 	jid, ok := bridge.ParsePuppetMXID(mxid)
 	if !ok {
 		return nil
@@ -35,7 +35,7 @@ func (bridge *Bridge) GetPuppetByMXID(mxid types.MatrixUserID) *Puppet {
 	return bridge.GetPuppetByJID(jid)
 }
 
-func (bridge *Bridge) GetPuppetByJID(jid types.AppID) *Puppet {
+func (bridge *Bridge) GetPuppetByJID(jid string) *Puppet {
 	bridge.puppetsLock.Lock()
 	defer bridge.puppetsLock.Unlock()
 	puppet, ok := bridge.puppets[jid]
@@ -68,14 +68,19 @@ func (bridge *Bridge) GetAllPuppets() []*Puppet {
 	return output
 }
 
+func (bridge *Bridge) FormatPuppetMXID(jid string) id.UserID {
+	return id.NewUserID(
+		bridge.Config.Bridge.FormatUsername(jid),
+		bridge.Config.Homeserver.Domain)
+}
+
 func (bridge *Bridge) NewPuppet(dbPuppet *database.Puppet) *Puppet {
 	return &Puppet{
 		Puppet: dbPuppet,
 		bridge: bridge,
 		log:    bridge.Log.Sub(fmt.Sprintf("Puppet/%s", dbPuppet.JID)),
 
-		MXID: fmt.Sprintf("@%s:%s", dbPuppet.JID,
-			bridge.Config.Homeserver.Domain),
+		MXID: bridge.FormatPuppetMXID(dbPuppet.JID),
 	}
 }
 
@@ -85,7 +90,7 @@ type Puppet struct {
 	bridge *Bridge
 	log    log.Logger
 
-	MXID types.MatrixUserID
+	MXID id.UserID
 }
 
 // func (puppet *Puppet) Intent() *appservice.IntentAPI {

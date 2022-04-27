@@ -22,7 +22,7 @@ type SQLStateStore struct {
 	typingLock sync.RWMutex
 }
 
-// var _ appservice.StateStore = (*SQLStateStore)(nil)
+var _ appservice.StateStore = (*SQLStateStore)(nil)
 
 func NewSQLStateStore(db *Database) *SQLStateStore {
 	return &SQLStateStore{
