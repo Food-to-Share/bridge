@@ -12,7 +12,7 @@ import (
 	"github.com/Food-to-Share/bridge/types"
 	flag "maunium.net/go/mauflag"
 	log "maunium.net/go/maulogger/v2"
-	appservice "maunium.net/go/mautrix-appservice"
+	"maunium.net/go/mautrix/appservice"
 )
 
 var configPath = flag.MakeFull("c", "config", "The path to your config file.", "config.yaml").String()
