@@ -125,15 +125,14 @@ func (user *User) jidPtr() *string {
 // 	return
 // }
 
-// func (user *User) Insert() {
-// 	// sess := user.sessionUnptr()
-// 	_, err := user.db.Exec("INSERT INTO user VALUES (?, ?, ?, ?, ?, ?)", user.MXID, user.jidPtr(),
-// 		user.ManagementRoom,
-// 		sess.ClientId, sess.ClientToken, sess.ServerToken)
-// 	if err != nil {
-// 		user.log.Warnfln("Failed to insert %s: %v", user.MXID, err)
-// 	}
-// }
+func (user *User) Insert() {
+	// sess := user.sessionUnptr()
+	_, err := user.db.Exec("INSERT INTO user VALUES (?, ?, ?)", user.MXID, user.jidPtr(),
+		user.ManagementRoom)
+	if err != nil {
+		user.log.Warnfln("Failed to insert %s: %v", user.MXID, err)
+	}
+}
 
 // func (user *User) Update() {
 // 	sess := user.sessionUnptr()

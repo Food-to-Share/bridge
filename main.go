@@ -49,9 +49,8 @@ type Bridge struct {
 	Config         *config.Config
 	DB             *database.Database
 	Log            log.Logger
-	StateStore     *AutosavingStateStore
+	StateStore     *database.SQLStateStore
 	Bot            *appservice.IntentAPI
-	Formatter      *Formatter
 
 	usersByMXID         map[types.MatrixUserID]*User
 	usersByJID          map[types.AppID]*User
@@ -85,7 +84,7 @@ func NewBridge() *Bridge {
 
 func (bridge *Bridge) Init() {
 	var err error
-	bridge.AS, err = bridge.Config.MakeAppservice()
+	bridge.AS, err = bridge.Config.MakeAppService()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to initialize AppService:", err)
 		os.Exit(11)
@@ -104,8 +103,7 @@ func (bridge *Bridge) Init() {
 	bridge.AS.Log = log.Sub("Matrix")
 
 	bridge.Log.Debugln("Initializing state store")
-	bridge.StateStore = NewAutosavingStateStore(bridge.Config.AppService.StateStore)
-	err = bridge.StateStore.Load()
+	bridge.StateStore = database.NewSQLStateStore(bridge.DB)
 	if err != nil {
 		bridge.Log.Fatalln("Failed to load state store:", err)
 		os.Exit(13)
@@ -123,7 +121,6 @@ func (bridge *Bridge) Init() {
 	bridge.EventProcessor = appservice.NewEventProcessor(bridge.AS)
 	bridge.Log.Debugln("Initializing Matrix event handler")
 	bridge.MatrixHandler = NewMatrixHandler(bridge)
-	bridge.Formatter = NewFormatter(bridge)
 
 	bridge.DB, err = database.New(bridge.Config.AppService.Database.URI)
 	if err != nil {
@@ -160,18 +157,14 @@ func (bridge *Bridge) UpdateBotProfile() {
 }
 
 func (bridge *Bridge) StartUsers() {
-	for _, user := range bridge.GetAllUsers() {
-		go user.Connect(false)
-	}
+	// for _, user := range bridge.GetAllUsers() {
+	// 	go user.Connect(false)
+	// }
 }
 
 func (bridge *Bridge) Stop() {
 	bridge.AS.Stop()
 	bridge.EventProcessor.Stop()
-	err := bridge.StateStore.Save()
-	if err != nil {
-		bridge.Log.Warnln("Failed to save state store:", err)
-	}
 }
 
 func (bridge *Bridge) Main() {

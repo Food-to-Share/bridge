@@ -120,7 +120,7 @@ func (portal *Portal) mxidPtr() *string {
 	return nil
 }
 
-func (portal *Portal) Insert() error {
+func (portal *Portal) Insert() {
 	_, err := portal.db.Exec("INSERT INTO portal VALUES (?, ?, ?, ?)",
 		portal.Key.JID, portal.Key.Receiver, portal.mxidPtr(), portal.Name)
 	if err != nil {
@@ -128,7 +128,7 @@ func (portal *Portal) Insert() error {
 	}
 }
 
-func (portal *Portal) Update() error {
+func (portal *Portal) Update() {
 	var mxid *string
 	if len(portal.MXID) > 0 {
 		mxid = &portal.MXID
