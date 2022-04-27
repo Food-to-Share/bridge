@@ -2,7 +2,7 @@ package main
 
 import (
 	log "maunium.net/go/maulogger/v2"
-	appservice "maunium.net/go/mautrix-appservice"
+	"maunium.net/go/mautrix/appservice"
 )
 
 type MatrixHandler struct {
