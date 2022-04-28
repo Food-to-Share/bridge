@@ -18,11 +18,11 @@ appservice:
     # Database config.
     database:
         # The database type. "sqlite3" and "postgres" are supported.
-        type: sqlite3
+        type: postgres
         # The database URI.
         #   SQLite: File name is enough. https://github.com/mattn/go-sqlite3#connection-string
         #   Postgres: Connection string. For example, postgres://user:password@host/database?sslmode=disable
-        uri: mautrix-whatsapp.db
+        uri: postgres://user:password@host/database?sslmode=disable
         # Maximum number of connections. Mostly relevant for Postgres.
         max_open_conns: 20
         max_idle_conns: 2
@@ -30,12 +30,12 @@ appservice:
     # Settings for provisioning API
     provisioning:
         # Prefix for the provisioning API paths.
-        prefix: /_matrix/provision/v1
+        prefix: /_matrix/provision
         # Shared secret for authentication. If set to "disable", the provisioning API will be disabled.
         shared_secret: disable
 
     # The unique ID of this appservice.
-    id: whatsapp
+    id: foodtoshare
     # Appservice bot details.
     bot:
         # Username of the appservice bot.
@@ -62,7 +62,7 @@ bridge:
     # {{.Short}}  - short display name from contact list
     # To use multiple if's, you need to use: {{else if .Name}}, for example:
     # "{{if .Notify}}{{.Notify}}{{else if .Name}}{{.Name}}{{else}}{{.Jid}}{{end}} (WA)"
-    displayname_template: "{{if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (WA)"
+    displayname_template: "{{if .Notify}}{{.Notify}}{{else}}{{.Jid}}{{end}} (FTS)"
     # Localpart template for per-user room grouping community IDs.
     # On startup, the bridge will try to create these communities, add all of the specific user's
     # portals to the community, and invite the Matrix user to it.

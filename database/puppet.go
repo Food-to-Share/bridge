@@ -41,7 +41,7 @@ func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
 }
 
 func (pq *PuppetQuery) Get(jid string) *Puppet {
-	row := pq.db.QueryRow("SELECT * FROM puppet WHERE jid=?", jid)
+	row := pq.db.QueryRow("SELECT * FROM puppet WHERE jid=$1", jid)
 	if row == nil {
 		return nil
 	}
@@ -58,9 +58,9 @@ type Puppet struct {
 }
 
 func (puppet *Puppet) Scan(row Scannable) *Puppet {
-	var displayname, avatar sql.NullString
+	var displayname sql.NullString
 	var quality sql.NullInt64
-	err := row.Scan(&puppet.JID, &avatar, &displayname, &quality)
+	err := row.Scan(&puppet.JID, &displayname, &quality)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			puppet.log.Errorln("Database scan failed:", err)
@@ -73,7 +73,7 @@ func (puppet *Puppet) Scan(row Scannable) *Puppet {
 }
 
 func (puppet *Puppet) Insert() {
-	_, err := puppet.db.Exec("INSERT INTO puppet VALUES (?, ?, ?)",
+	_, err := puppet.db.Exec("INSERT INTO puppet VALUES ($1, $2, $3)",
 		puppet.JID, puppet.Displayname, puppet.NameQuality)
 	if err != nil {
 		puppet.log.Warnfln("Failed to insert %s: %v", puppet.JID, err)
@@ -81,7 +81,7 @@ func (puppet *Puppet) Insert() {
 }
 
 func (puppet *Puppet) Update() {
-	_, err := puppet.db.Exec("UPDATE puppet SET displayname=?, name_quality=? WHERE jid=?",
+	_, err := puppet.db.Exec("UPDATE puppet SET displayname=$1, name_quality=$2 WHERE jid=$3",
 		puppet.Displayname, puppet.NameQuality, puppet.JID)
 	if err != nil {
 		puppet.log.Warnfln("Failed to update %s->%s: %v", puppet.JID, err)
