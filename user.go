@@ -86,3 +86,11 @@ func (bridge *Bridge) NewUser(dbUser *database.User) *User {
 	}
 	return user
 }
+
+func (user *User) StartUser(jid string, displayName string, reason string) (*Portal, *Puppet, bool) {
+	user.log.Debugfln("Starting User with", jid, "from", reason)
+	puppet := user.Bridge.GetPuppetByJID(jid)
+	portal := user.Bridge.GetPortalByJID(database.NewPortalKey(jid, user.JID))
+
+	return portal, puppet, true
+}

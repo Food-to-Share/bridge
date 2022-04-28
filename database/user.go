@@ -46,7 +46,7 @@ func (uq *UserQuery) GetAll() (users []*User) {
 }
 
 func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=?", userID)
+	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=$1", userID)
 	if row == nil {
 		return nil
 	}
@@ -54,7 +54,7 @@ func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
 }
 
 func (uq *UserQuery) GetByJID(userID string) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=?", stripSuffix(userID))
+	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=$1", stripSuffix(userID))
 	if row == nil {
 		return nil
 	}
@@ -126,7 +126,7 @@ func (user *User) jidPtr() *string {
 
 func (user *User) Insert() {
 	// sess := user.sessionUnptr()
-	_, err := user.db.Exec("INSERT INTO user VALUES (?, ?, ?)", user.MXID, user.jidPtr(),
+	_, err := user.db.Exec("INSERT INTO user VALUES ($1, $2, $3)", user.MXID, user.jidPtr(),
 		user.ManagementRoom)
 	if err != nil {
 		user.log.Warnfln("Failed to insert %s: %v", user.MXID, err)

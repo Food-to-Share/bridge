@@ -1,16 +1,19 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Food-to-Share/bridge/config"
 	"github.com/Food-to-Share/bridge/database"
 	flag "maunium.net/go/mauflag"
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/appservice"
 	"maunium.net/go/mautrix/id"
 )
@@ -50,6 +53,7 @@ type Bridge struct {
 	DB             *database.Database
 	Log            log.Logger
 	StateStore     *database.SQLStateStore
+	Provisioning   *ProvisioningAPI
 	Bot            *appservice.IntentAPI
 
 	usersByMXID         map[id.UserID]*User
@@ -82,6 +86,28 @@ func NewBridge() *Bridge {
 		os.Exit(10)
 	}
 	return bridge
+}
+
+func (bridge *Bridge) ensureConnection() {
+	for {
+		resp, err := bridge.Bot.Whoami()
+		if err != nil {
+			if errors.Is(err, mautrix.MUnknownToken) {
+				bridge.Log.Fatalln("The as_token was not accepted. Is the registration file installed in your homeserver correctly?")
+				os.Exit(16)
+			} else if errors.Is(err, mautrix.MExclusive) {
+				bridge.Log.Fatalln("The as_token was accepted, but the /register request was not. Are the homeserver domain and username template in the config correct, and do they match the values in the registration?")
+				os.Exit(16)
+			}
+			bridge.Log.Errorfln("Failed to connect to homeserver: %v. Retrying in 10 seconds...", err)
+			time.Sleep(10 * time.Second)
+		} else if resp.UserID != bridge.Bot.UserID {
+			bridge.Log.Fatalln("Unexpected user ID in whoami call: got %s, expected %s", resp.UserID, bridge.Bot.UserID)
+			os.Exit(17)
+		} else {
+			break
+		}
+	}
 }
 
 func (bridge *Bridge) Init() {
@@ -130,6 +156,10 @@ func (bridge *Bridge) Start() {
 	if err != nil {
 		bridge.Log.Fatalfln("Failed to create database tables:", err)
 		os.Exit(15)
+	}
+	if bridge.Provisioning != nil {
+		bridge.Log.Debugln("Initializing provisioning API")
+		bridge.Provisioning.Init()
 	}
 	bridge.Log.Debugln("Starting application service HTTP server")
 	go bridge.AS.Start()

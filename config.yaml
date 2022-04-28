@@ -30,7 +30,7 @@ appservice:
     # Settings for provisioning API
     provisioning:
         # Prefix for the provisioning API paths.
-        prefix: /_matrix/provision/v1
+        prefix: /_matrix/provision
         # Shared secret for authentication. If set to "disable", the provisioning API will be disabled.
         shared_secret: disable
 
