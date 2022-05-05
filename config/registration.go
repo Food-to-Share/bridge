@@ -19,6 +19,8 @@ func (config *Config) NewRegistration() (*appservice.Registration, error) {
 	config.AppService.ASToken = registration.AppToken
 	config.AppService.HSToken = registration.ServerToken
 
+	registration.SenderLocalpart = appservice.RandomString(32)
+
 	return registration, nil
 }
 

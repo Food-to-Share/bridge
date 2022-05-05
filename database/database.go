@@ -56,6 +56,14 @@ func (db *Database) CreateTables() error {
 	if err != nil {
 		return err
 	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS mx_registrations (
+		user_id VARCHAR(255) PRIMARY KEY
+	)`)
+
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 
 	"github.com/Food-to-Share/bridge/database"
+	"github.com/sony/sonyflake"
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix/appservice"
 	"maunium.net/go/mautrix/id"
 )
 
@@ -75,12 +78,17 @@ func (bridge *Bridge) FormatPuppetMXID(jid string) id.UserID {
 }
 
 func (bridge *Bridge) NewPuppet(dbPuppet *database.Puppet) *Puppet {
+	flake := sonyflake.NewSonyflake(sonyflake.Settings{})
+	id, err := flake.NextID()
+	if err != nil {
+		log.Fatalf("flake.NextID() failed with %s\n", err)
+	}
 	return &Puppet{
 		Puppet: dbPuppet,
 		bridge: bridge,
-		log:    bridge.Log.Sub(fmt.Sprintf("Puppet/%s", dbPuppet.JID)),
+		log:    bridge.Log.Sub(fmt.Sprintf("Puppet/%s", strconv.Itoa(int(id)))),
 
-		MXID: bridge.FormatPuppetMXID(dbPuppet.JID),
+		MXID: bridge.FormatPuppetMXID(strconv.Itoa(int(id))),
 	}
 }
 
@@ -91,8 +99,43 @@ type Puppet struct {
 	log    log.Logger
 
 	MXID id.UserID
+
+	customIntent *appservice.IntentAPI
 }
 
-// func (puppet *Puppet) Intent() *appservice.IntentAPI {
-// 	return puppet.bridge.AS.Intent(puppet.MXID)
-// }
+func (puppet *Puppet) CustomIntent() *appservice.IntentAPI {
+	return puppet.customIntent
+}
+
+func (puppet *Puppet) DefaultIntent() *appservice.IntentAPI {
+	return puppet.bridge.AS.Intent(puppet.MXID)
+}
+
+func (puppet *Puppet) UpdateName(source *User, displayName string) bool {
+	newName := displayName
+	if puppet.Displayname != newName {
+		err := puppet.DefaultIntent().SetDisplayName(newName)
+		if err == nil {
+			puppet.log.Debugln("Updated name", puppet.Displayname, "->", newName)
+			puppet.Displayname = newName
+			puppet.Update()
+		} else {
+			puppet.log.Warnln("Failed to set display name:", err)
+		}
+		return true
+	}
+	return false
+}
+
+func (puppet *Puppet) Sync(source *User, displayName string) {
+	err := puppet.DefaultIntent().EnsureRegistered()
+	if err != nil {
+		puppet.log.Errorln("Failed to ensure registered:", err)
+	}
+
+	update := false
+	update = puppet.UpdateName(source, displayName) || update
+	if update {
+		puppet.Update()
+	}
+}

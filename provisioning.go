@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	log "maunium.net/go/maulogger/v2"
@@ -26,7 +27,7 @@ func (prov *ProvisioningAPI) Init() {
 type Error struct {
 	Success bool   `json:"success"`
 	Error   string `json:"error"`
-	ErrCode string `json"errcode"`
+	ErrCode string `json:"errcode"`
 }
 
 type Response struct {
@@ -35,8 +36,8 @@ type Response struct {
 }
 
 type NewUser struct {
-	jid         string `json:"jid"`
-	displayName string `json:"name"`
+	Jid         string `json:"jid"`
+	DisplayName string `json:"displayName"`
 }
 
 type OtherUserInfo struct {
@@ -77,9 +78,17 @@ func (prov *ProvisioningAPI) StartUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (prov *ProvisioningAPI) resolveIdentifier(w http.ResponseWriter, r *http.Request) (string, string) {
-	decoder := json.NewDecoder(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return "", ""
+	}
+
+	defer r.Body.Close()
 	var u NewUser
-	err := decoder.Decode(&u)
+
+	err = json.Unmarshal(b, &u)
+
 	if err != nil {
 		jsonResponse(w, http.StatusNotFound, Error{
 			Error:   fmt.Sprintf("User not found"),
@@ -87,7 +96,7 @@ func (prov *ProvisioningAPI) resolveIdentifier(w http.ResponseWriter, r *http.Re
 		})
 		return "", ""
 	}
-	return u.jid, u.displayName
+	return u.Jid, u.DisplayName
 }
 
 func jsonResponse(w http.ResponseWriter, status int, response interface{}) {

@@ -1,0 +1,10 @@
+id: foodtoshare
+url: http://localhost:29318
+as_token: EsXIOV4biPVz9f3RnUtehTMVt6HgA48RYOmvstKVnjvX28QEuexTXAwUkijERyCk
+hs_token: NOObLetgPpO7r41FL17uH7HLmqyd6q34miws3TM7s7lKXMx3YALLHVzkgtJUDk7C
+sender_localpart: footdosharebot
+rate_limited: false
+namespaces:
+  users:
+  - regex: '@foodtoshare_{[0-9]+}:localhost'
+    exclusive: true
