@@ -20,8 +20,7 @@ func (uq *UserQuery) CreateTable() error {
 		management_room VARCHAR(255),
 		client_id    VARCHAR(255),
 		client_token VARCHAR(255),
-		server_token VARCHAR(255),
-		organization VARCHAR(255)
+		server_token VARCHAR(255)
 	)`)
 	return err
 }
@@ -46,7 +45,7 @@ func (uq *UserQuery) GetAll() (users []*User) {
 }
 
 func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=?", userID)
+	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=$1", userID)
 	if row == nil {
 		return nil
 	}
@@ -54,7 +53,7 @@ func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
 }
 
 func (uq *UserQuery) GetByJID(userID string) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=?", stripSuffix(userID))
+	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=$1", stripSuffix(userID))
 	if row == nil {
 		return nil
 	}
@@ -72,8 +71,9 @@ type User struct {
 
 func (user *User) Scan(row Scannable) *User {
 	var jid, clientID, clientToken, serverToken sql.NullString
-	var encKey, macKey []byte
-	err := row.Scan(&user.MXID, &jid, &user.ManagementRoom, &clientID, &clientToken, &serverToken, &encKey, &macKey)
+	// var encKey, macKey []byte
+	// err := row.Scan(&user.MXID, &jid, &user.ManagementRoom, &clientID, &clientToken, &serverToken, &encKey, &macKey)
+	err := row.Scan(&user.MXID, &jid, &user.ManagementRoom, &clientID, &clientToken, &serverToken)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			user.log.Errorln("Database scan failed:", err)
@@ -126,7 +126,7 @@ func (user *User) jidPtr() *string {
 
 func (user *User) Insert() {
 	// sess := user.sessionUnptr()
-	_, err := user.db.Exec("INSERT INTO user VALUES (?, ?, ?)", user.MXID, user.jidPtr(),
+	_, err := user.db.Exec(`INSERT INTO "user" VALUES ($1, $2, $3)`, user.MXID, user.jidPtr(),
 		user.ManagementRoom)
 	if err != nil {
 		user.log.Warnfln("Failed to insert %s: %v", user.MXID, err)
