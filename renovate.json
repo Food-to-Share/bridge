@@ -1,0 +1,5 @@
+{
+  "extends": [
+    "github>Food-to-Share/front"
+  ]
+}
