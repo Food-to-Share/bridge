@@ -1,7 +1,0 @@
-[Apr 27, 2022 22:47:22] [DEBUG] Initializing database
-[Apr 27, 2022 22:47:22] [DEBUG] Initializing state store
-[Apr 27, 2022 22:47:22] [DEBUG] Initializing Matrix event processor
-[Apr 27, 2022 22:47:22] [DEBUG] Initializing Matrix event handler
-[Apr 27, 2022 22:47:22] [INFO] Bridge initialization complete, starting...
-[Apr 27, 2022 22:47:22] [FATAL] Failed to create database tables:
-%!(EXTRA *pq.Error=pq: syntax error at or near "user")

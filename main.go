@@ -145,6 +145,8 @@ func (bridge *Bridge) Init() {
 	}
 	bridge.AS.StateStore = bridge.StateStore
 
+	bridge.Provisioning = &ProvisioningAPI{bridge: bridge}
+
 	bridge.Log.Debugln("Initializing Matrix event processor")
 	bridge.EventProcessor = appservice.NewEventProcessor(bridge.AS)
 	bridge.Log.Debugln("Initializing Matrix event handler")
@@ -157,6 +159,8 @@ func (bridge *Bridge) Start() {
 		bridge.Log.Fatalfln("Failed to create database tables:", err)
 		os.Exit(15)
 	}
+	bridge.Log.Debugln("Checking connection to homeserver")
+	bridge.ensureConnection()
 	if bridge.Provisioning != nil {
 		bridge.Log.Debugln("Initializing provisioning API")
 		bridge.Provisioning.Init()

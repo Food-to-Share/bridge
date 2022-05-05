@@ -17,6 +17,8 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/lib/pq v1.10.5
 	github.com/mattn/go-sqlite3 v1.14.12
+	github.com/rs/xid v1.4.0
+	github.com/sony/sonyflake v1.0.0
 	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921 // indirect
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	gopkg.in/yaml.v2 v2.4.0

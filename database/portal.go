@@ -48,8 +48,7 @@ func (pq *PortalQuery) CreateTable() error {
 		receiver VARCHAR(255),
 		mxid  VARCHAR(255) UNIQUE,
 		name VARCHAR(255),
-		PRIMARY KEY (jid, receiver),
-		FOREIGN KEY (receiver) REFERENCES "user"(mxid)
+		PRIMARY KEY (jid, receiver)
 	)`)
 	return err
 }

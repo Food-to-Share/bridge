@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix/id"
 )
 
 type PuppetQuery struct {
@@ -13,9 +14,11 @@ type PuppetQuery struct {
 
 func (pq *PuppetQuery) CreateTable() error {
 	_, err := pq.db.Exec(`CREATE TABLE IF NOT EXISTS puppet (
-		jid          VARCHAR(25) PRIMARY KEY,
+		jid          VARCHAR(255) PRIMARY KEY,
 		displayname  VARCHAR(255),
-		name_quality SMALLINT
+		name_quality SMALLINT,
+		custom_mxid  VARCHAR(255),
+		access_token VARCHAR(255)
 	)`)
 
 	return err
@@ -29,7 +32,7 @@ func (pq *PuppetQuery) New() *Puppet {
 }
 
 func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
-	rows, err := pq.db.Query("SELECT * FROM puppet")
+	rows, err := pq.db.Query("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet")
 	if err != nil || rows == nil {
 		return nil
 	}
@@ -41,7 +44,15 @@ func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
 }
 
 func (pq *PuppetQuery) Get(jid string) *Puppet {
-	row := pq.db.QueryRow("SELECT * FROM puppet WHERE jid=$1", jid)
+	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet WHERE jid=$1", jid)
+	if row == nil {
+		return nil
+	}
+	return pq.New().Scan(row)
+}
+
+func (pq *PuppetQuery) GetByCustomMXID(mxid id.UserID) *Puppet {
+	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet WHERE custom_mxid=$1", mxid)
 	if row == nil {
 		return nil
 	}
@@ -55,6 +66,9 @@ type Puppet struct {
 	JID         string
 	Displayname string
 	NameQuality int8
+
+	CustomMXID  id.UserID
+	AccessToken string
 }
 
 func (puppet *Puppet) Scan(row Scannable) *Puppet {
@@ -81,8 +95,8 @@ func (puppet *Puppet) Insert() {
 }
 
 func (puppet *Puppet) Update() {
-	_, err := puppet.db.Exec("UPDATE puppet SET displayname=$1, name_quality=$2 WHERE jid=$3",
-		puppet.Displayname, puppet.NameQuality, puppet.JID)
+	_, err := puppet.db.Exec("UPDATE puppet SET displayname=$1, name_quality=$2, custom_mxid=$3, access_token=$4 WHERE jid=$5",
+		puppet.Displayname, puppet.NameQuality, puppet.CustomMXID, puppet.AccessToken, puppet.JID)
 	if err != nil {
 		puppet.log.Warnfln("Failed to update %s->%s: %v", puppet.JID, err)
 	}

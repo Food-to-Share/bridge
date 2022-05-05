@@ -33,7 +33,7 @@ func NewSQLStateStore(db *Database) *SQLStateStore {
 }
 
 func (store *SQLStateStore) IsRegistered(userID id.UserID) bool {
-	row := store.db.QueryRow("SELECT EXISTS(SELECT 1 FROM mx_registrations WHERE user_id=$1", userID)
+	row := store.db.QueryRow("SELECT EXISTS(SELECT 1 FROM mx_registrations WHERE user_id=$1)", userID)
 	var isRegistered bool
 	err := row.Scan(&isRegistered)
 	if err != nil {
