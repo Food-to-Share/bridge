@@ -1,21 +1,12 @@
-FROM golang:1-alpine3.15 AS builder
+FROM golang:1.18
 
-RUN apk add --no-cache git ca-certificates build-base su-exec olm-dev
+WORKDIR /usr/src/app
 
-COPY . /build
-WORKDIR /build
-RUN go build -o /usr/bin/bridge
+# pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
-FROM alpine:3.15
+COPY . .
+RUN go build -v -o /usr/local/bin/app ./...
 
-ENV UID=1337 \
-    GID=1337
-
-RUN apk add --no-cache ffmpeg su-exec ca-certificates olm bash jq yq curl
-
-COPY --from=builder /usr/bin/bridge /usr/bin/bridge
-COPY --from=builder /build/example-config.yaml /opt/bridge/example-config.yaml
-COPY --from=builder /build/docker-run.sh /docker-run.sh
-VOLUME /data
-
-CMD ["/docker-run.sh"]
+CMD ["app"]
