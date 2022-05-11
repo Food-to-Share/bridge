@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+
+  bridge:
+    container_name: bridge
+    image: bridge:latest
+    volumes:
+      - /workspace/bridge/data:/data
+    # command: >
+    #  bash -c "ls -ali /data"
+    # command: >
+    #  bash -c "./bridge"
+
+
+
