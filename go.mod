@@ -2,10 +2,10 @@ module github.com/Food-to-Share/bridge
 
 go 1.17
 
-require maunium.net/go/mautrix v0.10.13-0.20220415172627-597a9560f721
+require maunium.net/go/mautrix v0.11.0
 
 require (
-	github.com/tidwall/gjson v1.14.0 // indirect
+	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.2.4 // indirect
@@ -19,8 +19,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.13
 	github.com/rs/xid v1.4.0
 	github.com/sony/sonyflake v1.0.0
-	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921 // indirect
-	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
+	golang.org/x/crypto v0.0.0-20220513210258-46612604a0f9 // indirect
+	golang.org/x/net v0.0.0-20220513224357-95641704303c // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	maunium.net/go/mauflag v1.0.0
 	maunium.net/go/maulogger/v2 v2.3.2
