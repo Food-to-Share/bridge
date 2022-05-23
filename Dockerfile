@@ -6,7 +6,7 @@ COPY . /build
 WORKDIR /build
 RUN go build -o /usr/bin/bridge
 
-FROM alpine:3.15
+FROM alpine:3.16
 
 ENV UID=1337 \
     GID=1337
