@@ -66,6 +66,12 @@ type RequestTokenEmail struct {
 	Send_attempt  int    `json:"send_attempt"`
 }
 
+type BindToken struct {
+	Client_Secret string `json:"client_secret"`
+	Mxid          string `json:"mxid"`
+	Sid           string `json:"sid"`
+}
+
 type RequestTokenNumberResp struct {
 	Sid    string `json:"sid"`
 	Msisdn string `json:"msisdn"`
@@ -162,7 +168,9 @@ func (prov *ProvisioningAPI) SyncEmail(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("JID: " + jid)
 	fmt.Println("Email: " + email)
-	// puppet := prov.bridge.GetPuppetByJID(jid)
+	puppet := prov.bridge.GetPuppetByJID(jid)
+
+	fmt.Println("MXID: " + puppet.MXID)
 
 	httpposturl := "http://localhost:8090/_matrix/identity/api/v1/validate/email/requestToken"
 
@@ -194,8 +202,48 @@ func (prov *ProvisioningAPI) SyncEmail(w http.ResponseWriter, r *http.Request) {
 		var rtr RequestTokenEmailResp
 
 		err = json.Unmarshal(respbody, &rtr)
+
+		newRequest := BindToken{
+			Client_Secret: "uij4hri2n4h42jn34k2n4nmwenjhjhnrj3n4j1b4",
+			Mxid:          string(puppet.MXID),
+			Sid:           rtr.Sid,
+		}
+
+		prov.bind(w, r, newRequest)
+		// status := http.StatusOK
+		// jsonResponse(w, status, rtr)
+	}
+}
+
+func (prov *ProvisioningAPI) bind(w http.ResponseWriter, r *http.Request, newRequest BindToken) {
+
+	httpposturl := "http://localhost:8090/_matrix/identity/api/v1/3pid/bind"
+
+	data, err := json.Marshal(newRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
+	reader := bytes.NewBuffer(data)
+
+	response, errorPost := http.Post(httpposturl, "application/json", reader)
+	if errorPost != nil {
+		panic(errorPost)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusOK {
+		respbody, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			//Failed to read response.
+			panic(err)
+		}
+		// var rtr RequestTokenEmailResp
+
+		// err = json.Unmarshal(respbody, &rtr)
+
 		status := http.StatusOK
-		jsonResponse(w, status, rtr)
+		jsonResponse(w, status, respbody)
 	}
 }
 
