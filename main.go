@@ -188,7 +188,8 @@ func (bridge *Bridge) UpdateBotProfile() {
 
 func (bridge *Bridge) StartUsers() {
 	// for _, user := range bridge.GetAllUsers() {
-	// 	go user.Connect(false)
+	// 	user.log.Debug("Chegou aqui")
+	// 	user.log.Debug("User MXID: " + user.MXID + ", User JID" + id.UserID(user.JID))
 	// }
 }
 
