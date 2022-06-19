@@ -55,6 +55,29 @@ func (bridge *Bridge) GetPuppetByJID(jid string) *Puppet {
 	return puppet
 }
 
+func (bridge *Bridge) getAllPuppetsWithCustomMXID() []*Puppet {
+	bridge.puppetsLock.Lock()
+	defer bridge.puppetsLock.Unlock()
+	dbPuppets := bridge.DB.Puppet.GetAllWithCustomMXID()
+	output := make([]*Puppet, len(dbPuppets))
+	for index, dbPuppet := range dbPuppets {
+		puppet, ok := bridge.puppets[dbPuppet.JID]
+		if !ok {
+			puppet = bridge.NewPuppet(dbPuppet)
+			bridge.puppets[dbPuppet.JID] = puppet
+			if len(dbPuppet.CustomMXID) > 0 {
+				bridge.puppetsByCustomMXID[dbPuppet.CustomMXID] = puppet
+			}
+		}
+		output[index] = puppet
+	}
+	return output
+}
+
+func (bridge *Bridge) LoadFilterID(id id.UserID) string {
+	return "workaround"
+}
+
 func (bridge *Bridge) GetAllPuppets() []*Puppet {
 	bridge.puppetsLock.Lock()
 	defer bridge.puppetsLock.Unlock()

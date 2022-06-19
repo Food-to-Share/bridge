@@ -59,6 +59,18 @@ func (pq *PuppetQuery) GetByCustomMXID(mxid id.UserID) *Puppet {
 	return pq.New().Scan(row)
 }
 
+func (pq *PuppetQuery) GetAllWithCustomMXID() (puppets []*Puppet) {
+	rows, err := pq.db.Query("SELECT * FROM puppet WHERE custom_mxid<>''")
+	if err != nil || rows == nil {
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		puppets = append(puppets, pq.New().Scan(rows))
+	}
+	return
+}
+
 type Puppet struct {
 	db  *Database
 	log log.Logger
@@ -69,12 +81,13 @@ type Puppet struct {
 
 	CustomMXID  id.UserID
 	AccessToken string
+	NextBatch   string
 }
 
 func (puppet *Puppet) Scan(row Scannable) *Puppet {
-	var displayname sql.NullString
+	var displayname, customMXID, accessToken, nextBatch sql.NullString
 	var quality sql.NullInt64
-	err := row.Scan(&puppet.JID, &displayname, &quality)
+	err := row.Scan(&puppet.JID, &displayname, &quality, &customMXID, &accessToken, &nextBatch)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			puppet.log.Errorln("Database scan failed:", err)
@@ -83,20 +96,23 @@ func (puppet *Puppet) Scan(row Scannable) *Puppet {
 	}
 	puppet.Displayname = displayname.String
 	puppet.NameQuality = int8(quality.Int64)
+	puppet.CustomMXID = id.UserID(customMXID.String)
+	puppet.AccessToken = accessToken.String
+	puppet.NextBatch = nextBatch.String
 	return puppet
 }
 
 func (puppet *Puppet) Insert() {
-	_, err := puppet.db.Exec("INSERT INTO puppet VALUES ($1, $2, $3)",
-		puppet.JID, puppet.Displayname, puppet.NameQuality)
+	_, err := puppet.db.Exec("INSERT INTO puppet VALUES ($1, $2, $3, $4, $5, $6)",
+		puppet.JID, puppet.Displayname, puppet.NameQuality, puppet.CustomMXID, puppet.AccessToken, puppet.NextBatch)
 	if err != nil {
 		puppet.log.Warnfln("Failed to insert %s: %v", puppet.JID, err)
 	}
 }
 
 func (puppet *Puppet) Update() {
-	_, err := puppet.db.Exec("UPDATE puppet SET displayname=$1, name_quality=$2, custom_mxid=$3, access_token=$4 WHERE jid=$5",
-		puppet.Displayname, puppet.NameQuality, puppet.CustomMXID, puppet.AccessToken, puppet.JID)
+	_, err := puppet.db.Exec("UPDATE puppet SET displayname=$1, name_quality=$2, custom_mxid=$3, access_token=$4, next_batch=$5 WHERE jid=$6",
+		puppet.Displayname, puppet.NameQuality, puppet.CustomMXID, puppet.AccessToken, puppet.NextBatch, puppet.JID)
 	if err != nil {
 		puppet.log.Warnfln("Failed to update %s->%s: %v", puppet.JID, err)
 	}

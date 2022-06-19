@@ -171,15 +171,15 @@ func (prov *ProvisioningAPI) SyncNiss(w http.ResponseWriter, r *http.Request) {
 
 		err = json.Unmarshal(respbody, &rtr)
 
-		// newRequest := BindToken{
-		// 	Client_Secret: "uij4hri2n4h42jn34k2n4nmwenjhjhnrj3n4j1b4",
-		// 	Mxid:          string(puppet.MXID),
-		// 	Sid:           rtr.Sid,
-		// }
+		newRequest := BindToken{
+			Client_Secret: "uij4hri2n4h42jn34k2n4nmwenjhjhnrj3n4j1b4",
+			Mxid:          string(puppet.MXID),
+			Sid:           rtr.Sid,
+		}
 
-		// prov.bind(w, r, newRequest)
-		status := http.StatusOK
-		jsonResponse(w, status, rtr)
+		prov.bind(w, r, newRequest)
+		// status := http.StatusOK
+		// jsonResponse(w, status, rtr)
 	}
 }
 

@@ -17,6 +17,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-sqlite3 v1.14.13
+	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.4.0
 	github.com/sony/sonyflake v1.0.0
 	golang.org/x/crypto v0.0.0-20220513210258-46612604a0f9 // indirect

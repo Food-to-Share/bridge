@@ -65,6 +65,7 @@ type Bridge struct {
 	portalsByJID        map[database.PortalKey]*Portal
 	portalsLock         sync.Mutex
 	puppets             map[string]*Puppet
+	puppetsByCustomMXID map[id.UserID]*Puppet
 	puppetsLock         sync.Mutex
 }
 
@@ -73,11 +74,11 @@ func NewBridge() *Bridge {
 		usersByMXID: make(map[id.UserID]*User),
 		usersByJID:  make(map[string]*User),
 		// spaceRooms:          make(map[id.RoomID]*User),
-		managementRooms: make(map[id.RoomID]*User),
-		portalsByMXID:   make(map[id.RoomID]*Portal),
-		portalsByJID:    make(map[database.PortalKey]*Portal),
-		puppets:         make(map[string]*Puppet),
-		// puppetsByCustomMXID: make(map[id.UserID]*Puppet),
+		managementRooms:     make(map[id.RoomID]*User),
+		portalsByMXID:       make(map[id.RoomID]*Portal),
+		portalsByJID:        make(map[database.PortalKey]*Portal),
+		puppets:             make(map[string]*Puppet),
+		puppetsByCustomMXID: make(map[id.UserID]*Puppet),
 	}
 	var err error
 	bridge.Config, err = config.Load(*configPath)
@@ -187,10 +188,16 @@ func (bridge *Bridge) UpdateBotProfile() {
 }
 
 func (bridge *Bridge) StartUsers() {
-	// for _, user := range bridge.GetAllUsers() {
-	// 	user.log.Debug("Chegou aqui")
-	// 	user.log.Debug("User MXID: " + user.MXID + ", User JID" + id.UserID(user.JID))
-	// }
+	bridge.Log.Debugln("Starting custom puppets")
+	for _, looppuppet := range bridge.getAllPuppetsWithCustomMXID() {
+		go func(puppet *Puppet) {
+			puppet.log.Debugln("Starting custom puppet", puppet.CustomMXID)
+			err := puppet.StartCustomMXID()
+			if err != nil {
+				puppet.log.Errorln("Failed to start custom puppet:", err)
+			}
+		}(looppuppet)
+	}
 }
 
 func (bridge *Bridge) Stop() {
