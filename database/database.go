@@ -64,6 +64,27 @@ func (db *Database) CreateTables() error {
 	if err != nil {
 		return err
 	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS mx_user_profile (
+		room_id     VARCHAR(255),
+		user_id     VARCHAR(255),
+		membership  VARCHAR(15) NOT NULL,
+		displayname VARCHAR(255),
+		avatar_url  VARCHAR(255),
+		PRIMARY KEY (room_id, user_id)
+	)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS mx_room_state (
+		room_id      VARCHAR(255) PRIMARY KEY,
+		power_levels TEXT
+	)`)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

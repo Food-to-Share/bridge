@@ -6,6 +6,9 @@ import (
 
 	"github.com/Food-to-Share/bridge/database"
 	log "maunium.net/go/maulogger/v2"
+	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/appservice"
+	"maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
 )
 
@@ -83,4 +86,98 @@ type Portal struct {
 	log    log.Logger
 
 	roomCreateLock sync.Mutex
+}
+
+func (portal *Portal) GetBasePowerLevels() *event.PowerLevelsEventContent {
+	anyone := 0
+	nope := 99
+	invite := 50
+
+	return &event.PowerLevelsEventContent{
+		UsersDefault:    anyone,
+		EventsDefault:   anyone,
+		RedactPtr:       &anyone,
+		StateDefaultPtr: &nope,
+		BanPtr:          &nope,
+		InvitePtr:       &invite,
+		Users: map[id.UserID]int{
+			portal.MainIntent().UserID: 100,
+		},
+		Events: map[string]int{
+			event.StateRoomName.Type:   anyone,
+			event.StateRoomAvatar.Type: anyone,
+			event.StateTopic.Type:      anyone,
+			event.EventReaction.Type:   anyone,
+			event.EventRedaction.Type:  anyone,
+		},
+	}
+}
+
+func (portal *Portal) ensureUserInvited(user *User) bool {
+	return user.ensureInvited(portal.MainIntent(), portal.MXID)
+}
+
+func (portal *Portal) MainIntent() *appservice.IntentAPI {
+	return portal.bridge.GetPuppetByJID(portal.Key.JID).DefaultIntent()
+}
+
+func (portal *Portal) CreateMatrixRoom(user *User) error {
+	portal.roomCreateLock.Lock()
+	defer portal.roomCreateLock.Unlock()
+	if len(portal.MXID) > 0 {
+		return nil
+	}
+
+	intent := portal.MainIntent()
+	if err := intent.EnsureRegistered(); err != nil {
+		return err
+	}
+
+	portal.log.Infofln("Creating Matrix room. Info source:", user.MXID)
+
+	puppet := portal.bridge.GetPuppetByJID(portal.Key.JID)
+	portal.Name = puppet.Displayname
+
+	initialState := []*event.Event{{
+		Type: event.StatePowerLevels,
+		Content: event.Content{
+			Parsed: portal.GetBasePowerLevels(),
+		},
+	}}
+
+	var invite []id.UserID
+
+	invite = append(invite, portal.bridge.Bot.UserID)
+
+	creationContent := make(map[string]interface{})
+	creationContent["m.federate"] = true
+
+	resp, err := intent.CreateRoom(&mautrix.ReqCreateRoom{
+		Visibility:      "private",
+		Name:            portal.Name,
+		Topic:           "Help " + portal.Name,
+		Invite:          invite,
+		Preset:          "private_chat",
+		IsDirect:        false,
+		InitialState:    initialState,
+		CreationContent: creationContent,
+	})
+
+	portal.MXID = resp.RoomID
+	portal.bridge.portalsLock.Lock()
+	portal.bridge.portalsByMXID[portal.MXID] = portal
+	portal.bridge.portalsLock.Unlock()
+	portal.Update()
+	portal.log.Infofln("Matrix room created:", portal.MXID)
+
+	for _, userID := range invite {
+		portal.bridge.StateStore.SetMembership(portal.MXID, userID, event.MembershipInvite)
+	}
+
+	portal.ensureUserInvited(user)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

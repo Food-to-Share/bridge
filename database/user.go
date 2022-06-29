@@ -33,7 +33,7 @@ func (uq *UserQuery) New() *User {
 }
 
 func (uq *UserQuery) GetAll() (users []*User) {
-	rows, err := uq.db.Query("SELECT * FROM user")
+	rows, err := uq.db.Query(`SELECT * FROM "user"`)
 	if err != nil || rows == nil {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (uq *UserQuery) GetAll() (users []*User) {
 }
 
 func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE mxid=$1", userID)
+	row := uq.db.QueryRow(`SELECT * FROM "user" WHERE mxid=$1`, userID)
 	if row == nil {
 		return nil
 	}
@@ -53,7 +53,7 @@ func (uq *UserQuery) GetByMXID(userID id.UserID) *User {
 }
 
 func (uq *UserQuery) GetByJID(userID string) *User {
-	row := uq.db.QueryRow("SELECT * FROM user WHERE jid=$1", stripSuffix(userID))
+	row := uq.db.QueryRow(`SELECT * FROM "user" WHERE jid=$1`, stripSuffix(userID))
 	if row == nil {
 		return nil
 	}

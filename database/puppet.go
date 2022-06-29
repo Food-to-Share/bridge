@@ -18,7 +18,8 @@ func (pq *PuppetQuery) CreateTable() error {
 		displayname  VARCHAR(255),
 		name_quality SMALLINT,
 		custom_mxid  VARCHAR(255),
-		access_token VARCHAR(255)
+		access_token VARCHAR(255),
+		next_batch   VARCHAR(255)
 	)`)
 
 	return err
@@ -32,7 +33,7 @@ func (pq *PuppetQuery) New() *Puppet {
 }
 
 func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
-	rows, err := pq.db.Query("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet")
+	rows, err := pq.db.Query("SELECT jid, displayname, name_quality, custom_mxid, access_token, next_batch FROM puppet")
 	if err != nil || rows == nil {
 		return nil
 	}
@@ -44,7 +45,7 @@ func (pq *PuppetQuery) GetAll() (puppets []*Puppet) {
 }
 
 func (pq *PuppetQuery) Get(jid string) *Puppet {
-	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet WHERE jid=$1", jid)
+	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token, next_batch  FROM puppet WHERE jid=$1", jid)
 	if row == nil {
 		return nil
 	}
@@ -52,7 +53,7 @@ func (pq *PuppetQuery) Get(jid string) *Puppet {
 }
 
 func (pq *PuppetQuery) GetByCustomMXID(mxid id.UserID) *Puppet {
-	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token FROM puppet WHERE custom_mxid=$1", mxid)
+	row := pq.db.QueryRow("SELECT jid, displayname, name_quality, custom_mxid, access_token, next_batch  FROM puppet WHERE custom_mxid=$1", mxid)
 	if row == nil {
 		return nil
 	}

@@ -55,6 +55,23 @@ func (bridge *Bridge) GetPuppetByJID(jid string) *Puppet {
 	return puppet
 }
 
+func (bridge *Bridge) getPuppetByCustomMXID(mxid id.UserID) *Puppet {
+	bridge.puppetsLock.Lock()
+	defer bridge.puppetsLock.Unlock()
+	puppet, ok := bridge.puppetsByCustomMXID[mxid]
+	if !ok {
+		dbPuppet := bridge.DB.Puppet.GetByCustomMXID(mxid)
+		if dbPuppet == nil {
+			return nil
+		}
+		puppet = bridge.NewPuppet(dbPuppet)
+		bridge.puppets[puppet.JID] = puppet
+		bridge.puppetsByCustomMXID[puppet.CustomMXID] = puppet
+	}
+
+	return puppet
+}
+
 func (bridge *Bridge) getAllPuppetsWithCustomMXID() []*Puppet {
 	bridge.puppetsLock.Lock()
 	defer bridge.puppetsLock.Unlock()

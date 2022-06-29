@@ -106,19 +106,23 @@ type PortalInfo struct {
 }
 
 func (prov *ProvisioningAPI) StartUser(w http.ResponseWriter, r *http.Request) {
-	user := prov.bridge.GetUserByMXID(id.UserID("@kevindom:localhost"))
+	user := prov.bridge.GetUserByMXID(id.UserID("@foodtosharebot:" + prov.bridge.AS.HomeserverDomain))
 
 	jid, displayName := prov.resolveIdentifier(w, r)
 	if user == nil {
 		return
 	}
 
-	portal, puppet, justCreated := user.StartUser(jid, displayName, "provisioning API New User")
+	portal, puppet, justCreated, err := user.StartUser(jid, displayName, "provisioning API New User")
+
+	if err != nil {
+		jsonResponse(w, http.StatusInternalServerError, Error{
+			Error: fmt.Sprintf("Failed to create portal: %v", err),
+		})
+	}
 
 	status := http.StatusOK
-	// if justCreated{
-	// 	status
-	// }
+
 	jsonResponse(w, status, PortalInfo{
 		RoomID: portal.MXID,
 		OtherUser: &OtherUserInfo{
