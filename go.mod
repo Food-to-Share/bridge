@@ -1,6 +1,6 @@
 module github.com/Food-to-Share/bridge
 
-go 1.17
+go 1.18
 
 require maunium.net/go/mautrix v0.11.0
 
