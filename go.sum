@@ -167,6 +167,8 @@ maunium.net/go/maulogger/v2 v2.3.2 h1:1XmIYmMd3PoQfp9J+PaHhpt80zpfmMqaShzUTC7FwY
 maunium.net/go/maulogger/v2 v2.3.2/go.mod h1:TYWy7wKwz/tIXTpsx8G3mZseIRiC5DoMxSZazOHy68A=
 maunium.net/go/maulogger/v2 v2.4.0 h1:Hg9clkipyjq+EjpWLEKx1zuK7KksysR6I9cHqRgqH1k=
 maunium.net/go/maulogger/v2 v2.4.0/go.mod h1:omPuYwYBILeVQobz8uO3XC8DIRuEb5rXYlQSuqrbCho=
+maunium.net/go/maulogger/v2 v2.4.1 h1:N7zSdd0mZkB2m2JtFUsiGTQQAdP0YeFWT7YMc80yAL8=
+maunium.net/go/maulogger/v2 v2.4.1/go.mod h1:omPuYwYBILeVQobz8uO3XC8DIRuEb5rXYlQSuqrbCho=
 maunium.net/go/mautrix v0.3.7/go.mod h1:SkGZzch8CvU2qKtNpYxtzZ0sQxfVEJ3IsVVLSUBUx9Y=
 maunium.net/go/mautrix v0.10.13-0.20220415172627-597a9560f721 h1:QuCkJp2siYbXtZPStpYqPZ9Cz6yFCEVOGkBkmUchg7M=
 maunium.net/go/mautrix v0.10.13-0.20220415172627-597a9560f721/go.mod h1:zOor2zO/F10T/GbU67vWr0vnhLso88rlRr1HIrb1XWU=
