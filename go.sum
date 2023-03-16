@@ -188,5 +188,7 @@ maunium.net/go/mautrix v0.13.0 h1:CRdpMFc1kDSNnCZMcqahR9/pkDy/vgRbd+fHnSCl6Yg=
 maunium.net/go/mautrix v0.13.0/go.mod h1:gYMQPsZ9lQpyKlVp+DGwOuc9LIcE/c8GZW2CvKHISgM=
 maunium.net/go/mautrix v0.14.0 h1:kdQ06HzmMaLGZqmSh/ykDhp5C2gIREQL9TS8hY+FqLs=
 maunium.net/go/mautrix v0.14.0/go.mod h1:voJPvnTkA60rxBl6mvdPxcP7y7iY5w3d/K55IoX+2oY=
+maunium.net/go/mautrix v0.15.0 h1:gkK9HXc1SSPwY7qOAqchzj2xxYqiOYeee8lr28A2g/o=
+maunium.net/go/mautrix v0.15.0/go.mod h1:1v8QVDd7q/eJ+eg4sgeOSEafBAFhkt4ab2i97M3IkNQ=
 maunium.net/go/mautrix-appservice v0.2.1 h1:G3gSem2CktOhjelNCk6HbzR2VsD0YzRX4luoen7atfE=
 maunium.net/go/mautrix-appservice v0.2.1/go.mod h1:gLatDUjKqfv8s7WyEmT+k1fd1FvwVBts2wwhzShFNqQ=

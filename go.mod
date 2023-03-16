@@ -2,7 +2,7 @@ module github.com/Food-to-Share/bridge
 
 go 1.19
 
-require maunium.net/go/mautrix v0.14.0
+require maunium.net/go/mautrix v0.15.0
 
 require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
