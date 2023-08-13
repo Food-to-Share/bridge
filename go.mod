@@ -23,7 +23,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/rs/xid v1.5.0
-	github.com/sony/sonyflake v1.1.0
+	github.com/sony/sonyflake v1.2.0
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
