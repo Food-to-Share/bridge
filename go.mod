@@ -22,7 +22,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/lib/pq v1.10.9
-	github.com/mattn/go-sqlite3 v1.14.18
+	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/rs/xid v1.5.0
 	github.com/sony/sonyflake v1.2.0
 	golang.org/x/crypto v0.15.0 // indirect
