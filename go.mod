@@ -4,7 +4,11 @@ go 1.21
 
 toolchain go1.22.1
 
-require maunium.net/go/mautrix v0.18.0
+require (
+	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
+	maunium.net/go/mautrix v0.18.0
+)
 
 require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -17,7 +21,6 @@ require (
 	go.mau.fi/util v0.4.1 // indirect
 	golang.org/x/exp v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/sys v0.18.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
@@ -29,7 +32,6 @@ require (
 	github.com/sony/sonyflake v1.2.0
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	maunium.net/go/mauflag v1.0.0
 	maunium.net/go/maulogger/v2 v2.4.1
 )
