@@ -2,7 +2,7 @@ module github.com/Food-to-Share/bridge
 
 go 1.21
 
-toolchain go1.22.5
+toolchain go1.22.6
 
 require maunium.net/go/mautrix v0.19.0
 
